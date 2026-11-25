@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, ArrowRight, Zap } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { PricingTier } from "@/types";
 import { apiFetch } from "@/lib/client";
 
@@ -20,22 +20,6 @@ export default function PricingSection() {
       className="py-20 bg-surface relative border-b border-line"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="max-w-3xl mb-14 space-y-3">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-brand-soft/60 border border-brand/30 text-brand-strong text-xs font-semibold">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Engagement Models</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-bold text-ink tracking-tight">
-            Transparent Scopes & Pricing Structures
-          </h2>
-          <p className="text-muted text-sm sm:text-base leading-relaxed">
-            We work with engineering contractors, agricultural firms, and
-            research teams under clearly defined milestones, project scopes, or
-            recurring monitoring retainers.
-          </p>
-        </div>
-
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {tiers.map((tier) => (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Briefcase, MapPin, X, Check, ChevronRight } from "lucide-react";
+import { MapPin, X, Check, ChevronRight } from "lucide-react";
 import { Project } from "@/types";
 import { apiFetch } from "@/lib/client";
 
@@ -35,23 +35,11 @@ export default function PastWorkSection() {
       className="py-20 bg-surface relative border-b border-line"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header & Filter */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="max-w-2xl space-y-3">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-brand-soft/60 border border-brand/30 text-brand-strong text-xs font-semibold">
-              <Briefcase className="w-3.5 h-3.5" />
-              <span>Trail of Evidence & Projects</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-bold text-ink tracking-tight">
-              Case Studies & Past Spatial Analyses
-            </h2>
-            <p className="text-muted text-sm sm:text-base leading-relaxed">
-              Explore concrete examples of satellite imagery processing, terrain
-              modeling, and spatial analyses completed by gsVista.
-            </p>
-          </div>
-
-          {/* Filter Pills */}
+        {/* Category Filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Filter by sector
+          </span>
           <div className="flex flex-wrap gap-1 p-1 bg-paper rounded-lg border border-line">
             {categories.map((cat) => (
               <button
