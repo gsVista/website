@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light: black on white, with a blue accent scale */
+  --paper: 255 255 255;
+  --surface: 248 250 252;
+  --surface-2: 241 245 249;
+  --ink: 15 23 42;
+  --muted: 71 85 105;
+  --line: 226 232 240;
+  --brand: 2 132 199;
+  --brand-strong: 3 105 161;
+  --brand-soft: 224 242 254;
+  --danger: 220 38 38;
+  --danger-soft: 254 242 242;
+  --danger-ink: 153 27 27;
+}
+
+.dark {
+  /* Dark: inverted neutrals, brighter blue for contrast */
+  --paper: 5 8 20;
+  --surface: 9 13 24;
+  --surface-2: 15 23 42;
+  --ink: 241 245 249;
+  --muted: 148 163 184;
+  --line: 30 41 59;
+  --brand: 56 189 248;
+  --brand-strong: 125 211 252;
+  --brand-soft: 8 47 73;
+  --danger: 248 113 113;
+  --danger-soft: 69 10 10;
+  --danger-ink: 254 202 202;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+.dark html,
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+/* Subtle, enterprise scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: rgb(var(--paper));
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--brand));
+}
+
+/* MapLibre popups follow the active theme */
+.maplibregl-popup-content {
+  background: rgb(var(--paper)) !important;
+  color: rgb(var(--ink)) !important;
+  border: 1px solid rgb(var(--line)) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  font-size: 12px !important;
+  box-shadow: 0 10px 25px -10px rgb(var(--ink) / 0.25) !important;
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {
+  border-bottom-color: rgb(var(--paper)) !important;
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
+  border-top-color: rgb(var(--paper)) !important;
+}
+.maplibregl-ctrl-group {
+  background: rgb(var(--paper)) !important;
+}

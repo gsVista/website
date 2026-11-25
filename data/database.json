@@ -1,0 +1,248 @@
+{
+  "projects": [
+    {
+      "id": "lagos-coastal-flood-study",
+      "title": "Lagos Coastal Inundation & Drainage Catchment Analysis",
+      "client": "Coastal Infrastructure & Urban Study Group",
+      "category": "Climate & Flood",
+      "summary": "Integrated radar satellite imagery (Sentinel-1 SAR) with digital terrain data to identify natural drainage corridors and storm surge flood-prone areas across coastal Lagos.",
+      "description": "Evaluated historical flood events and topographic depressions across the Lekki peninsula and Lagos Island. The analysis mapped low-lying terrain susceptible to tidal surges, evaluated drainage flow lines, and provided spatial shapefiles for infrastructure planning.",
+      "tags": ["SAR Analysis", "Hydrological Flow", "Coastal Planning", "Lagos"],
+      "coverImage": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+      "date": "2025",
+      "featured": true,
+      "location": "Lagos State, Nigeria",
+      "toolsUsed": ["Sentinel-1 SAR", "QGIS", "GDAL", "OpenTopography DEM"],
+      "deliverables": [
+        "Inundation Hazard Maps & Drainage Corridors (GeoPackage / Shapefile)",
+        "Technical Spatial Assessment Document",
+        "Interactive WebGIS Review Layer"
+      ]
+    },
+    {
+      "id": "southwest-crop-health-monitoring",
+      "title": "Multispectral Vegetation Index (NDVI) Crop Health Mapping",
+      "client": "Agro-Enterprise Farmland Group",
+      "category": "Precision Agriculture",
+      "summary": "Time-series Sentinel-2 multispectral imagery analysis mapping vegetation vigor indices (NDVI) across farmland blocks to track crop development and localized growth anomalies.",
+      "description": "Processed cloud-filtered Sentinel-2 optical imagery to compute Normalized Difference Vegetation Index (NDVI) values across active planting seasons. Identified zones of uneven canopy density to assist farm managers in targeted soil sampling and irrigation planning.",
+      "tags": ["NDVI", "Sentinel-2", "Vegetation Vigor", "Agriculture"],
+      "coverImage": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80",
+      "date": "2024",
+      "featured": true,
+      "location": "Ogun & Oyo States, Nigeria",
+      "toolsUsed": ["Sentinel-2 MSI", "Python (Rasterio, GeoPandas)", "QGIS"],
+      "deliverables": [
+        "Zonal NDVI Vegetation Health Maps",
+        "Field Prescription & Sampling Zone Polygons (GeoJSON)",
+        "Monthly Satellite Progress Briefs"
+      ]
+    },
+    {
+      "id": "lagos-metropolitan-land-use",
+      "title": "Metropolitan Land Cover & Urban Expansion Mapping",
+      "client": "Urban Planning & Environmental Researchers",
+      "category": "Urban Planning",
+      "summary": "Multi-temporal satellite imagery classification comparing urban built-up footprint and green space changes across the Greater Lagos metropolitan area over the past decade.",
+      "description": "Conducted satellite land use and land cover (LULC) classification across historic and recent Sentinel-2 and Landsat archives. Mapped built-up surface expansion, mangrove wetland boundaries, and surface water extent to aid long-term municipal planning.",
+      "tags": ["LULC", "Urban Mapping", "Change Detection", "Sentinel-2"],
+      "coverImage": "https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=1200&q=80",
+      "date": "2024",
+      "featured": true,
+      "location": "Greater Lagos Area, Nigeria",
+      "toolsUsed": ["Landsat & Sentinel-2", "Supervised Classification", "GeoPandas"],
+      "deliverables": [
+        "Urban Built-up vs Wetland Vector Boundaries",
+        "Land Cover Transition Matrix",
+        "High-Resolution Thematic Maps"
+      ]
+    },
+    {
+      "id": "solar-site-suitability-mapping",
+      "title": "Regional Solar Farm Site Suitability & Terrain Screening",
+      "client": "Renewable Energy Developers",
+      "category": "Renewable Energy",
+      "summary": "GIS multi-criteria terrain slope analysis and proximity screening to evaluate candidate parcels for utility-scale photovoltaic solar installation.",
+      "description": "Combined elevation slope models, solar irradiation datasets, and proximity to existing road and transmission corridors to rank candidate development parcels across Northern Nigeria.",
+      "tags": ["GIS Multi-Criteria", "Slope Analysis", "Renewable Energy"],
+      "coverImage": "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=1200&q=80",
+      "date": "2024",
+      "featured": false,
+      "location": "Northern Nigeria",
+      "toolsUsed": ["SRTM DEM", "ArcGIS / QGIS", "Solar Radiation Models"],
+      "deliverables": [
+        "Candidate Parcel Suitability Ranking Shapefiles",
+        "Terrain Slope & Aspect Constraint Maps",
+        "Preliminary Spatial Feasibility Report"
+      ]
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rev-1",
+      "author": "Engr. Babatunde Adeleke",
+      "role": "Project Lead",
+      "organization": "Prime Atlantic Engineering",
+      "content": "gsVista delivered clear drainage catchment mapping and low-lying flood zone delineations for our site assessment. The spatial data was well structured and directly compatible with our engineering CAD and GIS workflow.",
+      "rating": 5,
+      "date": "2025",
+      "verified": true
+    },
+    {
+      "id": "rev-2",
+      "author": "Dr. Miriam O. Nwosu",
+      "role": "Agricultural Consultant",
+      "organization": "West African Agriscience Network",
+      "content": "The NDVI vegetation index maps provided reliable visibility into crop health variability across our trial farms. gsVista was prompt, technically sound, and communicative throughout the project.",
+      "rating": 5,
+      "date": "2024",
+      "verified": true
+    }
+  ],
+  "pricing": [
+    {
+      "id": "tier-feasibility",
+      "name": "Targeted Spatial Assessment",
+      "tagline": "Focused GIS analysis or remote sensing study for a defined project area.",
+      "price": "Custom Scope",
+      "period": "per project scope",
+      "popular": false,
+      "features": [
+        "Defined Area of Interest (AOI) boundary",
+        "Satellite imagery acquisition & pre-processing",
+        "Specialized analysis (Flood risk, NDVI, LULC, or Slope)",
+        "GIS Geodatabase delivery (Shapefile / GeoPackage / GeoJSON)",
+        "Technical PDF assessment report with cartographic maps",
+        "Technical handover consultation"
+      ],
+      "ctaText": "Request Scope & Quote"
+    },
+    {
+      "id": "tier-monitoring",
+      "name": "Recurring Satellite Monitoring",
+      "tagline": "Periodic satellite updates for agricultural plantations, construction corridors, or environmental sites.",
+      "price": "Retainer",
+      "period": "monthly / quarterly",
+      "popular": true,
+      "features": [
+        "Scheduled satellite data acquisition (Sentinel / Planet)",
+        "Time-series vegetation or surface change tracking",
+        "Regular data digest and anomaly notifications",
+        "Updated spatial layers ready for GIS integration",
+        "Dedicated analyst support for queries and custom cutouts"
+      ],
+      "ctaText": "Inquire About Monitoring"
+    },
+    {
+      "id": "tier-consulting",
+      "name": "Enterprise GIS & Data Pipelines",
+      "tagline": "Custom spatial data infrastructure, web map portals, and technical advisory.",
+      "price": "Bespoke",
+      "period": "contract basis",
+      "popular": false,
+      "features": [
+        "Large-scale regional or multi-site mapping",
+        "Custom WebGIS dashboards and interactive map viewers",
+        "Cloud-optimized geospatial data pipelines (COG / GeoJSON)",
+        "Workflow automation and team training",
+        "Full data handover and ongoing technical advisory"
+      ],
+      "ctaText": "Discuss Enterprise Project"
+    }
+  ],
+  "mapLayers": [
+    {
+      "id": "layer-lagos-catchment",
+      "name": "Lagos Coastal Study Area",
+      "type": "geojson",
+      "description": "Study area boundary across Lagos Island, Victoria Island, and Lekki Peninsula.",
+      "color": "#059669",
+      "visible": true,
+      "opacity": 0.8,
+      "createdAt": "2026-11-09T16:00:00.000Z",
+      "data": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "name": "Lagos Coastal Zone & Study Corridor",
+              "description": "Low-lying coastal terrain, lagoons, and drainage catchment area under continuous monitoring.",
+              "category": "Coastal Study Area"
+            },
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [3.35, 6.42],
+                  [3.58, 6.42],
+                  [3.62, 6.47],
+                  [3.50, 6.50],
+                  [3.37, 6.48],
+                  [3.35, 6.42]
+                ]
+              ]
+            }
+          },
+          {
+            "type": "Feature",
+            "properties": {
+              "name": "Lekki Peninsula Coastal Study Corridor",
+              "description": "High-density development area situated between Lagos Lagoon and the Atlantic coastline.",
+              "category": "Drainage Study"
+            },
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [3.44, 6.42],
+                  [3.55, 6.43],
+                  [3.56, 6.46],
+                  [3.45, 6.45],
+                  [3.44, 6.42]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "layer-ogun-agri",
+      "name": "Ogun Farmland Vegetation AOI",
+      "type": "geojson",
+      "description": "Agricultural vegetative study blocks evaluated for NDVI chlorophyll indices.",
+      "color": "#10b981",
+      "visible": true,
+      "opacity": 0.7,
+      "createdAt": "2026-11-09T16:00:00.000Z",
+      "data": {
+        "type": "FeatureCollection",
+        "features": [
+          {
+            "type": "Feature",
+            "properties": {
+              "name": "Ogun Agricultural Assessment Block",
+              "description": "Commercial agricultural parcel mapped using Sentinel-2 multispectral surface reflectance.",
+              "category": "Precision Agriculture"
+            },
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [
+                [
+                  [3.32, 6.85],
+                  [3.42, 6.85],
+                  [3.43, 6.94],
+                  [3.31, 6.93],
+                  [3.32, 6.85]
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "inquiries": [],
+  "updatedAt": "2026-11-09T16:00:00.000Z"
+}
