@@ -101,6 +101,7 @@ const SCHEMA_STATEMENTS = [
     color TEXT NOT NULL DEFAULT '#0284c7',
     color_field TEXT,
     url TEXT,
+    source_crs TEXT,
     data JSONB,
     visible BOOLEAN NOT NULL DEFAULT true,
     opacity REAL NOT NULL DEFAULT 1,
@@ -130,6 +131,30 @@ const SCHEMA_STATEMENTS = [
 ];
 
 let readyPromise: Promise<void> | null = null;
+
+/**
+ * Older builds stored GeoJSON as a JSON string inside the JSONB column, which
+ * MapLibre treats as a URL. Convert those rows back into real JSON objects.
+ */
+async function repairStringifiedLayerData(sql: ReturnType<typeof postgres>) {
+  const rows = await sql<{ id: string; raw: string }[]>`
+    SELECT id, data #>> '{}' AS raw
+    FROM gsvista_layers
+    WHERE jsonb_typeof(data) = 'string'
+  `;
+  for (const row of rows) {
+    try {
+      const parsed = JSON.parse(row.raw);
+      await sql`
+        UPDATE gsvista_layers
+        SET data = ${sql.json(parsed)}
+        WHERE id = ${row.id}
+      `;
+    } catch {
+      // Leave unparseable values untouched.
+    }
+  }
+}
 
 async function seedIfEmpty(sql: ReturnType<typeof postgres>) {
   const [{ count: projectCount }] = await sql<{ count: string }[]>`
@@ -223,6 +248,11 @@ export function ensureDatabase(): Promise<void> {
       for (const statement of SCHEMA_STATEMENTS) {
         await sql.unsafe(statement);
       }
+      // Migration for databases created before per-layer source CRS support.
+      await sql.unsafe(
+        "ALTER TABLE gsvista_layers ADD COLUMN IF NOT EXISTS source_crs TEXT",
+      );
+      await repairStringifiedLayerData(sql);
       await seedIfEmpty(sql);
     })().catch((error) => {
       readyPromise = null;
@@ -295,6 +325,15 @@ export function toPricing(row: any): PricingTier {
 }
 
 export function toLayer(row: any): MapLayerItem {
+  let data = row.data;
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      // Keep the original value so the admin can inspect/fix it.
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
@@ -303,7 +342,8 @@ export function toLayer(row: any): MapLayerItem {
     color: row.color,
     colorField: row.color_field || undefined,
     url: row.url || undefined,
-    data: row.data ?? undefined,
+    sourceCrs: row.source_crs || undefined,
+    data: data ?? undefined,
     visible: row.visible,
     opacity: row.opacity,
     createdAt:

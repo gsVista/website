@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS gsvista_layers (
   color TEXT NOT NULL DEFAULT '#0284c7',
   color_field TEXT,
   url TEXT,
+  source_crs TEXT,
   data JSONB,
   visible BOOLEAN NOT NULL DEFAULT true,
   opacity REAL NOT NULL DEFAULT 1,

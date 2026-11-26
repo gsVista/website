@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { toLayer, toPricing, toProject, toReview, toService } from "@/lib/db";
+import {
+  getSql,
+  toLayer,
+  toPricing,
+  toProject,
+  toReview,
+  toService,
+} from "@/lib/db";
+import { isSupportedCrs, suggestSourceCrs } from "@/lib/geoUtils";
 
 const textArray = z.array(z.string()).default([]);
 
@@ -71,21 +79,39 @@ export const layerSchema = z.object({
   color: z.string().default("#0284c7"),
   colorField: z.string().optional(),
   url: z.string().optional(),
+  sourceCrs: z
+    .string()
+    .optional()
+    .refine(
+      (value) => isSupportedCrs(value),
+      "Unsupported source CRS. Use an EPSG code such as EPSG:4326 or EPSG:32631.",
+    ),
   data: z.any().optional(),
   visible: z.boolean().default(true),
   opacity: z.number().min(0).max(1).default(1),
 });
 
-/** Parses GeoJSON pasted as text into an object before validation. */
+/**
+ * Parses GeoJSON pasted as text and records the source CRS when the file
+ * declares one, so reprojection survives the round trip to the database.
+ */
 export function normalizeLayerInput(body: any) {
-  if (body && typeof body.data === "string" && body.data.trim()) {
+  if (!body) return body;
+
+  let data = body.data;
+  if (typeof data === "string" && data.trim()) {
     try {
-      return { ...body, data: JSON.parse(body.data) };
+      data = JSON.parse(data);
     } catch {
       throw new Error("Layer data is not valid GeoJSON JSON");
     }
   }
-  return body;
+
+  return {
+    ...body,
+    data,
+    sourceCrs: body.sourceCrs || suggestSourceCrs(data) || undefined,
+  };
 }
 
 export const resourceConfigs = {
@@ -174,7 +200,8 @@ export const resourceConfigs = {
       color: item.color,
       color_field: item.colorField || null,
       url: item.url || null,
-      data: item.data ? JSON.stringify(item.data) : null,
+      source_crs: item.sourceCrs || null,
+      data: item.data ? getSql().json(item.data) : null,
       visible: item.visible,
       opacity: item.opacity,
     }),

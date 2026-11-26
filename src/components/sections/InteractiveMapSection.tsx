@@ -30,21 +30,6 @@ export default function InteractiveMapSection() {
 
         {/* Embedded Interactive Map */}
         <InteractiveMap />
-
-        {/* Informative Note */}
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted gap-2">
-          <p>
-            Default projection: WGS84 (EPSG:4326). Additional custom layers
-            (GeoJSON and Cloud-Optimized GeoTIFFs) can be uploaded and managed
-            via the Admin Portal.
-          </p>
-          <a
-            href="#contact"
-            className="text-brand-strong hover:text-brand-strong font-medium shrink-0"
-          >
-            Request custom layers for your project &rarr;
-          </a>
-        </div>
       </div>
     </section>
   );

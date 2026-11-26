@@ -5,7 +5,6 @@ import {
   Layers,
   Maximize2,
   Minimize2,
-  MapPin,
   Satellite,
   Globe,
   Check,
@@ -18,6 +17,7 @@ export default function InteractiveMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const urlDataCache = useRef<Record<string, any>>({});
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -26,6 +26,7 @@ export default function InteractiveMap() {
   const [visibleLayerIds, setVisibleLayerIds] = useState<
     Record<string, boolean>
   >({});
+  const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<{
     name: string;
     description: string;
@@ -36,17 +37,13 @@ export default function InteractiveMap() {
   useEffect(() => {
     apiFetch<{ success: boolean; items: MapLayerItem[] }>("/api/layers")
       .then(({ items: activeLayers }) => {
-        // Normalize any layer that contains non-4326 GeoJSON data
+        // Reproject every layer once, using its declared/selected source CRS.
         const normalizedLayers = activeLayers.map((layer) => {
           if (layer.type === "geojson" && layer.data) {
-            try {
-              return {
-                ...layer,
-                data: normalizeGeoJSONToWGS84(layer.data),
-              };
-            } catch {
-              return layer;
-            }
+            return {
+              ...layer,
+              data: normalizeGeoJSONToWGS84(layer.data, layer.sourceCrs),
+            };
           }
           return layer;
         });
@@ -66,15 +63,19 @@ export default function InteractiveMap() {
     let mapInstance: any = null;
 
     const initMap = async () => {
+      setMapLoaded(false);
       try {
         const maplibregl = await import("maplibre-gl");
+
+        // Next.js breaks MapLibre's `import.meta.url` worker discovery, so
+        // point it at the self-hosted worker copied into public/maplibre.
+        maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
         if (!document.getElementById("maplibre-css")) {
           const link = document.createElement("link");
           link.id = "maplibre-css";
           link.rel = "stylesheet";
-          link.href =
-            "https://unpkg.com/maplibre-gl@6.19.0/dist/maplibre-gl.css";
+          link.href = "/maplibre/maplibre-gl.css";
           document.head.appendChild(link);
         }
 
@@ -167,132 +168,222 @@ export default function InteractiveMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
+    let cancelled = false;
 
-    layers.forEach((layer) => {
-      const sourceId = `src-${layer.id}`;
-      const fillLayerId = `fill-${layer.id}`;
-      const lineLayerId = `line-${layer.id}`;
-      const isVisible = visibleLayerIds[layer.id] !== false;
+    const syncLayers = async () => {
+      for (const layer of layers) {
+        if (cancelled) return;
+        if (layer.type !== "geojson") continue;
 
-      // Determine data source: URL or inline GeoJSON
-      const hasData = layer.type === "geojson" && (layer.data || layer.url);
-      if (!hasData) return;
+        const sourceId = `src-${layer.id}`;
+        const fillLayerId = `fill-${layer.id}`;
+        const lineLayerId = `line-${layer.id}`;
+        const isVisible = visibleLayerIds[layer.id] !== false;
 
-      // Data-driven colour expression for layers that expose a "combined" score
-      const fillColor: any =
-        layer.colorField === "combined"
-          ? [
-              "interpolate",
-              ["linear"],
-              ["to-number", ["get", "combined"], 0],
-              0,
-              "#1e3a5f",
-              0.3,
-              "#2563eb",
-              0.6,
-              "#22c55e",
-              1.0,
-              "#facc15",
-              1.4,
-              "#f97316",
-              1.77,
-              "#ef4444",
-            ]
-          : layer.colorField === "polsby"
+        // Inline data is already normalised; remote GeoJSON is fetched and
+        // reprojected here so URL layers behave like uploaded ones.
+        let data: any = layer.data ?? null;
+        if (!data && layer.url) {
+          data = urlDataCache.current[layer.id] ?? null;
+          if (!data) {
+            try {
+              const response = await fetch(layer.url);
+              data = normalizeGeoJSONToWGS84(
+                await response.json(),
+                layer.sourceCrs,
+              );
+              urlDataCache.current[layer.id] = data;
+            } catch {
+              // Let MapLibre try to load the URL itself.
+              data = layer.url;
+            }
+          }
+        }
+        if (!data) continue;
+
+        // Data-driven colour expression for layers that expose a "combined" score
+        const fillColor: any =
+          layer.colorField === "combined"
             ? [
                 "interpolate",
                 ["linear"],
-                ["to-number", ["get", "polsby"], 0],
-                0.27,
-                "#fca5a5",
-                0.32,
+                ["to-number", ["get", "combined"], 0],
+                0,
+                "#1e3a5f",
+                0.3,
+                "#2563eb",
+                0.6,
+                "#22c55e",
+                1.0,
+                "#facc15",
+                1.4,
+                "#f97316",
+                1.77,
                 "#ef4444",
-                0.36,
-                "#b91c1c",
               ]
-            : layer.color || "#0284c7";
+            : layer.colorField === "polsby"
+              ? [
+                  "interpolate",
+                  ["linear"],
+                  ["to-number", ["get", "polsby"], 0],
+                  0.27,
+                  "#fca5a5",
+                  0.32,
+                  "#ef4444",
+                  0.36,
+                  "#b91c1c",
+                ]
+              : layer.color || "#0284c7";
 
-      if (!map.getSource(sourceId)) {
-        // Compute normalized data if provided directly
-        const layerData = layer.data
-          ? normalizeGeoJSONToWGS84(layer.data)
-          : layer.url;
+        if (!map.getSource(sourceId)) {
+          map.addSource(sourceId, {
+            type: "geojson",
+            data: data as any,
+          });
 
-        map.addSource(sourceId, {
-          type: "geojson",
-          data: layerData as any,
-        });
+          // Fill Layer
+          map.addLayer({
+            id: fillLayerId,
+            type: "fill",
+            source: sourceId,
+            paint: {
+              "fill-color": fillColor,
+              "fill-opacity": isVisible ? (layer.opacity ?? 0.65) : 0,
+            },
+          });
 
-        // Fill Layer
-        map.addLayer({
-          id: fillLayerId,
-          type: "fill",
-          source: sourceId,
-          paint: {
-            "fill-color": fillColor,
-            "fill-opacity": isVisible ? (layer.opacity ?? 0.65) : 0,
-          },
-        });
+          // Boundary Line Layer
+          map.addLayer({
+            id: lineLayerId,
+            type: "line",
+            source: sourceId,
+            paint: {
+              "line-color": "#ffffff",
+              "line-width": layer.colorField ? 0.4 : 1.5,
+              "line-opacity": isVisible ? 0.6 : 0,
+            },
+          });
 
-        // Boundary Line Layer
-        map.addLayer({
-          id: lineLayerId,
-          type: "line",
-          source: sourceId,
-          paint: {
-            "line-color": "#ffffff",
-            "line-width": layer.colorField ? 0.4 : 1.5,
-            "line-opacity": isVisible ? 0.6 : 0,
-          },
-        });
+          // Interactive click popup
+          map.on("click", fillLayerId, (e: any) => {
+            if (e.features && e.features[0]) {
+              const props = e.features[0].properties || {};
+              const scoreLabel =
+                props.combined != null
+                  ? `MCDA Score: ${parseFloat(props.combined).toFixed(4)}`
+                  : props.polsby != null
+                    ? `Polsby-Popper: ${parseFloat(props.polsby).toFixed(4)}`
+                    : null;
+              setSelectedFeature({
+                name: props.name || layer.name,
+                description:
+                  scoreLabel ||
+                  props.description ||
+                  layer.description ||
+                  "Analysis feature.",
+                category: props.category || layer.description,
+              });
+            }
+          });
 
-        // Interactive click popup
-        map.on("click", fillLayerId, (e: any) => {
-          if (e.features && e.features[0]) {
-            const props = e.features[0].properties || {};
-            const scoreLabel =
-              props.combined != null
-                ? `MCDA Score: ${parseFloat(props.combined).toFixed(4)}`
-                : props.polsby != null
-                  ? `Polsby-Popper: ${parseFloat(props.polsby).toFixed(4)}`
-                  : null;
-            setSelectedFeature({
-              name: props.name || layer.name,
-              description:
-                scoreLabel ||
-                props.description ||
-                layer.description ||
-                "Analysis feature.",
-              category: props.category || layer.description,
-            });
+          map.on("mouseenter", fillLayerId, () => {
+            map.getCanvas().style.cursor = "pointer";
+          });
+          map.on("mouseleave", fillLayerId, () => {
+            map.getCanvas().style.cursor = "";
+          });
+        } else {
+          // Keep edited data in sync with the live source
+          if (typeof data !== "string") {
+            const source = map.getSource(sourceId) as any;
+            if (source?.setData) source.setData(data);
           }
-        });
-
-        map.on("mouseenter", fillLayerId, () => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-        map.on("mouseleave", fillLayerId, () => {
-          map.getCanvas().style.cursor = "";
-        });
-      } else {
-        // Update visibility only
-        if (map.getLayer(fillLayerId)) {
-          map.setPaintProperty(
-            fillLayerId,
-            "fill-opacity",
-            isVisible ? (layer.opacity ?? 0.65) : 0,
-          );
-        }
-        if (map.getLayer(lineLayerId)) {
-          map.setPaintProperty(
-            lineLayerId,
-            "line-opacity",
-            isVisible ? 0.6 : 0,
-          );
+          if (map.getLayer(fillLayerId)) {
+            map.setPaintProperty(
+              fillLayerId,
+              "fill-opacity",
+              isVisible ? (layer.opacity ?? 0.65) : 0,
+            );
+          }
+          if (map.getLayer(lineLayerId)) {
+            map.setPaintProperty(
+              lineLayerId,
+              "line-opacity",
+              isVisible ? 0.6 : 0,
+            );
+          }
         }
       }
-    });
+    };
+
+    syncLayers();
+    return () => {
+      cancelled = true;
+    };
   }, [layers, visibleLayerIds, mapLoaded]);
+
+  /** Zooms the map to a layer's full extent. */
+  const zoomToLayer = async (layer: MapLayerItem) => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    let data: any = layer.data ?? null;
+    if (!data && layer.type === "geojson" && layer.url) {
+      data = urlDataCache.current[layer.id] ?? null;
+      if (!data) {
+        try {
+          const response = await fetch(layer.url);
+          data = normalizeGeoJSONToWGS84(
+            await response.json(),
+            layer.sourceCrs,
+          );
+          urlDataCache.current[layer.id] = data;
+        } catch {
+          return;
+        }
+      }
+    }
+    if (!data) return;
+
+    const bounds = getGeoJSONBounds(data);
+    if (!bounds) return;
+
+    const [minLng, minLat, maxLng, maxLat] = bounds;
+    if (![minLng, minLat, maxLng, maxLat].every(Number.isFinite)) return;
+
+    const isPoint =
+      Math.abs(maxLng - minLng) < 0.0005 && Math.abs(maxLat - minLat) < 0.0005;
+
+    if (isPoint) {
+      map.flyTo({
+        center: [(minLng + maxLng) / 2, (minLat + maxLat) / 2],
+        zoom: Math.max(map.getZoom(), 14),
+        duration: 1200,
+      });
+      return;
+    }
+
+    map.fitBounds(
+      [
+        [minLng, minLat],
+        [maxLng, maxLat],
+      ],
+      { padding: 60, maxZoom: 15, duration: 1200 },
+    );
+  };
+
+  /** Selects a layer, makes it visible and flies to it. */
+  const selectLayer = (layer: MapLayerItem) => {
+    setActiveLayerId(layer.id);
+    setVisibleLayerIds((prev) =>
+      prev[layer.id] === false ? { ...prev, [layer.id]: true } : prev,
+    );
+    zoomToLayer(layer);
+  };
+
+  const toggleLayerVisibility = (id: string) => {
+    setVisibleLayerIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Fullscreen toggle with automatic map resize
   const toggleFullscreen = () => {
@@ -333,34 +424,6 @@ export default function InteractiveMap() {
     return () =>
       document.removeEventListener("fullscreenchange", handleFsChange);
   }, []);
-
-  const toggleLayerVisibility = (id: string) => {
-    setVisibleLayerIds((prev) => {
-      const willBeVisible = !prev[id];
-
-      // "turning on a layer should cause the map to zoom into it"
-      if (willBeVisible && mapRef.current) {
-        const targetLayer = layers.find((l) => l.id === id);
-        if (targetLayer && targetLayer.data) {
-          const bounds = getGeoJSONBounds(targetLayer.data);
-          if (bounds) {
-            mapRef.current.fitBounds(
-              [
-                [bounds[0], bounds[1]],
-                [bounds[2], bounds[3]],
-              ],
-              { padding: 60, maxZoom: 15, duration: 1200 },
-            );
-          }
-        }
-      }
-
-      return {
-        ...prev,
-        [id]: willBeVisible,
-      };
-    });
-  };
 
   return (
     <div
@@ -425,7 +488,7 @@ export default function InteractiveMap() {
               <span>Project Layers</span>
             </span>
             <span className="text-[11px] text-muted font-normal">
-              Toggle on / off
+              Click to zoom
             </span>
           </div>
 
@@ -437,33 +500,51 @@ export default function InteractiveMap() {
             ) : (
               layers.map((layer) => {
                 const isChecked = visibleLayerIds[layer.id] !== false;
+                const isActive = activeLayerId === layer.id;
                 return (
-                  <button
+                  <div
                     key={layer.id}
-                    onClick={() => toggleLayerVisibility(layer.id)}
-                    className={`w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors border ${
-                      isChecked
-                        ? "bg-surface-2/90 border-line text-ink"
-                        : "bg-surface-2/40 border-line text-muted hover:text-ink"
+                    className={`w-full flex items-center gap-1 p-1 rounded-lg border transition-colors ${
+                      isActive
+                        ? "bg-brand-soft/60 border-brand/50"
+                        : isChecked
+                          ? "bg-surface-2/90 border-line"
+                          : "bg-surface-2/40 border-line"
                     }`}
                   >
-                    <div className="flex items-center gap-2 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => selectLayer(layer)}
+                      title={`Zoom to ${layer.name}`}
+                      className="flex-1 min-w-0 flex items-center gap-2 p-1.5 rounded-md text-left text-xs"
+                    >
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ backgroundColor: layer.color || "#0284c7" }}
                       />
-                      <span className="truncate font-medium">{layer.name}</span>
-                    </div>
-                    <span
-                      className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                      <span
+                        className={`truncate font-medium ${
+                          isChecked ? "text-ink" : "text-muted"
+                        }`}
+                      >
+                        {layer.name}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleLayerVisibility(layer.id)}
+                      aria-pressed={isChecked}
+                      aria-label={`${isChecked ? "Hide" : "Show"} ${layer.name}`}
+                      title={isChecked ? "Hide layer" : "Show layer"}
+                      className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors ${
                         isChecked
-                          ? "bg-brand border-brand/40 text-ink"
-                          : "border-line bg-paper"
+                          ? "bg-brand border-brand text-paper"
+                          : "border-line bg-paper text-transparent"
                       }`}
                     >
-                      {isChecked && <Check className="w-3 h-3" />}
-                    </span>
-                  </button>
+                      <Check className="w-3 h-3" />
+                    </button>
+                  </div>
                 );
               })
             )}

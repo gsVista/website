@@ -38,3 +38,6 @@ next-env.d.ts
 *.tar.gz
 *.tif
 *.tiff
+
+# Generated MapLibre assets (copied by scripts/copy-maplibre-worker.mjs)
+/public/maplibre/

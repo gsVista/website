@@ -63,7 +63,7 @@ Supabase, the JSON-file storage layer, Cloudflare Pages, and the Groq AI assista
 2. Choose a tab:
    - **Projects** — title, client, category, summary, description, tags, tools, deliverables, featured flag, and cover image upload.
    - **Services** — the cards on the homepage, including icon, methodology, tools, and deliverables.
-   - **Map layers** — name, color, visibility, opacity, and GeoJSON. Upload a `.geojson` file or paste JSON.
+   - **Map layers** — name, color, visibility, opacity, and GeoJSON. Upload a `.geojson` file or paste JSON. Files that declare a CRS are detected automatically; otherwise set the **source coordinate system** (for example `EPSG:32631`) so the layer is reprojected to WGS84 correctly.
    - **Pricing** — package details, features, and display order.
    - **Reviews** — author, organization, rating, verified badge, and quote.
    - **Inquiries** — read submitted leads and update their status.

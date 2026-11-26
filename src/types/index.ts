@@ -71,6 +71,7 @@ export interface MapLayerItem {
   color: string;
   colorField?: string; // property name to drive data-expression fill colouring
   url?: string;
+  sourceCrs?: string; // Source coordinate system, e.g. "EPSG:32631"
   data?: any; // Inline GeoJSON object
   visible: boolean;
   opacity?: number;

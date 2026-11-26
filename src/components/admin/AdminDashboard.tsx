@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { apiFetch, apiSend, uploadFile } from "@/lib/client";
+import { suggestSourceCrs } from "@/lib/geoUtils";
 
 type EditableTab = "projects" | "services" | "layers" | "pricing" | "reviews";
 type TabKey = EditableTab | "inquiries";
@@ -191,6 +192,7 @@ const RESOURCES: Record<EditableTab, ResourceConfig> = {
       color: "#0284c7",
       colorField: "",
       url: "",
+      sourceCrs: "",
       data: null,
       visible: true,
       opacity: 0.8,
@@ -230,10 +232,18 @@ const RESOURCES: Record<EditableTab, ResourceConfig> = {
       { key: "visible", label: "Visible by default", type: "toggle" },
       { key: "opacity", label: "Opacity (0–1)", type: "number" },
       {
+        key: "sourceCrs",
+        label: "Source coordinate system (optional)",
+        type: "text",
+        placeholder: "Auto-detect — e.g. EPSG:32631",
+        hint: "Needed when the file has no CRS metadata. Common codes: EPSG:4326 (WGS84), EPSG:3857 (Web Mercator), EPSG:32631 (UTM 31N), EPSG:32735 (UTM 35S).",
+        wide: true,
+      },
+      {
         key: "data",
         label: "GeoJSON data",
         type: "geojson",
-        hint: "Upload a .geojson/.json file or paste GeoJSON. Stored in the database with the layer.",
+        hint: "Upload a .geojson/.json file or paste GeoJSON. A declared CRS is detected automatically; otherwise set the source coordinate system above.",
         wide: true,
       },
     ],
@@ -544,6 +554,19 @@ export default function AdminDashboard() {
                         onChange={(value) =>
                           setForm((prev) => ({ ...prev, [field.key]: value }))
                         }
+                        onGeoJsonText={
+                          field.key === "data"
+                            ? (text) => {
+                                const detected = suggestSourceCrs(text);
+                                if (!detected) return;
+                                setForm((prev) =>
+                                  prev && !prev.sourceCrs
+                                    ? { ...prev, sourceCrs: detected }
+                                    : prev,
+                                );
+                              }
+                            : undefined
+                        }
                         busy={busy}
                       />
                     ))}
@@ -724,11 +747,13 @@ function FieldInput({
   field,
   value,
   onChange,
+  onGeoJsonText,
   busy,
 }: {
   field: FieldDef;
   value: any;
   onChange: (value: any) => void;
+  onGeoJsonText?: (text: string) => void;
   busy: boolean;
 }) {
   const className =
@@ -785,6 +810,10 @@ function FieldInput({
         : value
           ? JSON.stringify(value, null, 2)
           : "";
+    const updateText = (next: string) => {
+      onChange(next);
+      onGeoJsonText?.(next);
+    };
     return (
       <div className={wrapper}>
         {label}
@@ -798,7 +827,7 @@ function FieldInput({
               className="hidden"
               onChange={async (event) => {
                 const file = event.target.files?.[0];
-                if (file) onChange(await file.text());
+                if (file) updateText(await file.text());
               }}
             />
           </label>
@@ -811,7 +840,7 @@ function FieldInput({
         <textarea
           rows={7}
           value={text}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => updateText(event.target.value)}
           className={`${className} font-mono text-xs`}
           placeholder='{ "type": "FeatureCollection", "features": [] }'
         />
