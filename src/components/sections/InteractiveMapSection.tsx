@@ -30,6 +30,16 @@ export default function InteractiveMapSection() {
 
         {/* Embedded Interactive Map */}
         <InteractiveMap />
+
+        {/* Custom layers call to action */}
+        <div className="mt-4 flex justify-end text-xs">
+          <a
+            href="#contact"
+            className="text-brand-strong hover:text-brand-strong font-medium shrink-0"
+          >
+            Request custom layers for your project &rarr;
+          </a>
+        </div>
       </div>
     </section>
   );
